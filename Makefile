@@ -1,29 +1,41 @@
-TARGET = fluid
+COMMONDIR := ./
 
-SRCS  = $(shell find ./src     -type f -name *.cpp)
-HEADS = $(shell find ./include -type f -name *.h)
-OBJS = $(SRCS:.cpp=.o)
-DEPS = Makefile.depend
+TARGET := $(COMMONDIR)fluid
 
-INCLUDES = -I./include
-CXXFLAGS = -O2 -Wall $(INCLUDES)
-LDFLAGS = -lm
+GEN_TAGS := $(shell command -v ctags 2> /dev/null)
 
+ifdef GEN_TAGS
+TAGS = $(COMMONDIR)tags
+endif
 
-all: $(TARGET)
+SRCS  := $(shell find $(COMMONDIR)src     -type f -name *.cpp)
+HEADS := $(shell find $(COMMONDIR)include -type f -name *.h)
+OBJS  := $(SRCS:.cpp=.o)
 
-$(TARGET): $(OBJS) $(HEADS)
-	$(CXX) $(LDFLAGS) -o $@ $(OBJS)
+INCLUDES := -I./include
+CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -pipe -std=c++23
+LDFLAGS  := -lm $(shell pkg-config sfml-all --libs)
+
+all: ${TARGET}
+
+$(TARGET): ${OBJS} ${HEADS}
+	${CXX} ${LDFLAGS} -o ${TARGET} ${OBJS}
+ifdef GEN_TAGS
+	ctags -f $(TAGS) -R --language-force=c++
+endif
+
+release: CXXFLAGS += -O3 -mtune=native -march=native -fomit-frame-pointer
+release: all
 
 run: all
-	@./$(TARGET)
+	@./${TARGET}
 
-.PHONY: depend clean
-depend:
-	$(CXX) $(INCLUDES) -MM $(SRCS) > $(DEPS)
-	@sed -i -E "s/^(.+?).o: ([^ ]+?)\1/\2\1.o: \2\1/g" $(DEPS)
+.PHONY: depend clean run
 
 clean:
-	$(RM) $(OBJS) $(TARGET)
+	$(RM) ${OBJS} ${TARGET}
+ifdef GEN_TAGS
+	$(RM) ${TAGS}
+endif
 
--include $(DEPS)
+.EXTRA_PREREQS := $(abspath $(lastword $(MAKEFILE_LIST)))
