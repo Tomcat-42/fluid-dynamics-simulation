@@ -40,3 +40,9 @@ fluid
 
 # Makefile
 .depend
+
+# Compilation Database
+compile_commands.json
+
+# cache files
+.cache
