@@ -37,3 +37,6 @@ tags
 
 # Target
 fluid
+
+# Makefile
+.depend

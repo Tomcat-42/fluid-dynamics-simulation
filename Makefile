@@ -1,3 +1,4 @@
+.EXTRA_PREREQS := $(abspath $(lastword $(MAKEFILE_LIST)))
 COMMONDIR := ./
 
 TARGET := $(COMMONDIR)fluid
@@ -8,18 +9,19 @@ ifdef GEN_TAGS
 TAGS = $(COMMONDIR)tags
 endif
 
-SRCS  := $(shell find $(COMMONDIR)src     -type f -name *.cpp)
-HEADS := $(shell find $(COMMONDIR)include -type f -name *.h)
-OBJS  := $(SRCS:.cpp=.o)
+SRCS := $(shell find $(COMMONDIR)src     -type f -name *.cpp)
+HDRS := $(shell find $(COMMONDIR)include -type f -name *.hpp)
+OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
 CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -pipe -std=c++23
 LDFLAGS  := -lm $(shell pkg-config sfml-all --libs)
 
-all: ${TARGET}
+all: $(TARGET)
 
-$(TARGET): ${OBJS} ${HEADS}
-	${CXX} ${LDFLAGS} -o ${TARGET} ${OBJS}
+$(TARGET): ${HDRS}
+$(TARGET): ${OBJS}
+	${CXX} ${LDFLAGS} -o $(TARGET) ${OBJS} ${CXXFLAGS}
 ifdef GEN_TAGS
 	ctags -f $(TAGS) -R --language-force=c++
 endif
@@ -27,10 +29,21 @@ endif
 release: CXXFLAGS += -O3 -mtune=native -march=native -fomit-frame-pointer
 release: all
 
+debug: all
+	@gdb ./${TARGET}
+
 run: all
 	@./${TARGET}
 
-.PHONY: depend clean run
+.PHONY: clean run debug
+
+depend: .depend
+
+.depend:
+	$(CXX) $(INCLUDES) -MM $(SRCS) > .depend
+	@sed -i -E "s/^(.+?).o: ([^ ]+?)\1/\2\1.o: \2\1/g" .depend
+
+include .depend
 
 clean:
 	$(RM) ${OBJS} ${TARGET}
@@ -38,4 +51,3 @@ ifdef GEN_TAGS
 	$(RM) ${TAGS}
 endif
 
-.EXTRA_PREREQS := $(abspath $(lastword $(MAKEFILE_LIST)))

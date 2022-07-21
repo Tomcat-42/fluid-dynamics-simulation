@@ -2,7 +2,7 @@
 
 Window::Window(const std::size_t& windowX, const std::size_t& windowY): windowX(windowX), windowY(windowY) {
     this->window = new sf::RenderWindow(sf::VideoMode(windowX, windowY), "Gimp"); // NOTE: dwm kinda stinky
-    this->buffer.create(windowX, windowY);
+        this->buffer.create(windowX, windowY);
 }
 
 std::size_t Window::getX() const {
@@ -23,7 +23,6 @@ bool Window::pollEvent(sf::Event& event){
 
 void Window::close(){
     this->window->close();
-
 }
 
 void Window::display(void){
@@ -37,5 +36,9 @@ void Window::setPixel(const std::size_t& x, const std::size_t& y, const sf::Colo
     buffer.setPixel(x, y, color);
 }
 
+std::tuple<std::size_t, std::size_t> Window::mouseGetPosition(){
+    sf::Vector2i mousePosition = sf::Mouse::getPosition(*this->window);
+    return { mousePosition.x, mousePosition.y };
+}
 
 Window::~Window(){}

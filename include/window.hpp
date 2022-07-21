@@ -27,6 +27,8 @@ class Window {
     void display();
     void setPixel(const std::size_t& x, const std::size_t& y, const sf::Color& color);
 
+    std::tuple<std::size_t, std::size_t> mouseGetPosition();
+
     ~Window();
 };
 
