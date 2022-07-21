@@ -6,13 +6,16 @@
 #include "window.hpp"
 #include "field.hpp"
 
-#define SIZE 200
+#define SIZE 500
 
+static inline __attribute__((always_inline))
+std::uint16_t getAngle(double u, double v){
+    double m = std::sqrt(std::pow(u, 2) + std::pow(v, 2));
+    return (360 + (std::uint16_t)(std::atan2(v / m, u / m) * 180 / M_PI)) % 360;
+}
+
+static inline __attribute__((always_inline))
 sf::Color hsv(std::int16_t hue, double sat, double val){
-    hue %= 360;
-
-    while(hue<0) hue += 360;
-
     if(sat<0.f) sat = 0.f;
     if(sat>1.f) sat = 1.f;
 
@@ -25,8 +28,7 @@ sf::Color hsv(std::int16_t hue, double sat, double val){
     float q = val*(1.f-sat*f);
     float t = val*(1.f-sat*(1-f));
 
-    switch(h)
-    {
+    switch (h){
         default:
         case 0:
         case 6: return sf::Color(val*255, t*255, p*255);
@@ -37,7 +39,6 @@ sf::Color hsv(std::int16_t hue, double sat, double val){
         case 5: return sf::Color(val*255, p*255, q*255);
     }
 }
-
 
 int main(const __attribute__((unused)) int argc, const __attribute__((unused)) char** argv){
     Window window(SIZE, SIZE);
@@ -71,7 +72,7 @@ int main(const __attribute__((unused)) int argc, const __attribute__((unused)) c
 
             for (std::size_t i = 0; i < 25; i++){
                 for (std::size_t j = 0; j < 25; j++){
-                    auto [d, u, v] = field[std::min(x + i, (std::size_t)SIZE), std::min(y + j, (std::size_t)SIZE)];
+                    auto [d, u, v] = field.operator[]<1>(std::min(x + i, (std::size_t)SIZE), std::min(y + j, (std::size_t)SIZE));
 
                     d += 0.5;
 
@@ -87,20 +88,20 @@ int main(const __attribute__((unused)) int argc, const __attribute__((unused)) c
             }
         }
 
-        field.step(0.0001, 0.00001, 0.1);
+        field.step(0.00001, 0.00001, 0.1);
 
         for (std::size_t i = 0; i < SIZE; i++){
             for (std::size_t j = 0; j < SIZE; j++){
 
-                auto [d, u, v] = field[i, j];
+                auto [d, u, v] = field.operator[]<2>(i, j);
 
                 double m = std::sqrt(std::pow(u, 2) + std::pow(v, 2));
 
-                double k = std::atan2(v / m, u / m) * 180 / M_PI;
+                window.setPixel(i, j, hsv(getAngle(u / m, v / m), 1.0F, d));
 
-                window.setPixel(i, j, hsv(k, 1.0F, d));
+                auto [dP, uP, vP] = field.operator[]<1>(i, j);
 
-                d = u = v = 0.0F;
+                dP = uP = vP = 0.0F;
             }
         }
 

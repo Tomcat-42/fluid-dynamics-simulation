@@ -44,18 +44,25 @@ public:
 
     inline
     void addSource(T* x, T* s, const double& dt){
+#pragma omp parallel for
         for (std::size_t i = 0; i < FIELD_SIZE; i++) x[i] += dt * s[i];
     }
 
+    template<std::uint8_t B>
     std::tuple<T&, T&, T&> operator[](const std::size_t& i, const std::size_t& j){
-        return {this->dP[I(i + 1, j + 1)], this->uP[I(i + 1, j + 1)], this->vP[I(i + 1, j + 1)]};
+        if constexpr (B == 1){
+            return {this->dP[I(i + 1, j + 1)], this->uP[I(i + 1, j + 1)], this->vP[I(i + 1, j + 1)]};
+        } else {
+            return {this->d[I(i + 1, j + 1)], this->u[I(i + 1, j + 1)], this->v[I(i + 1, j + 1)]};
+        }
     }
 
-    template<std::uint8_t B>
+    template<std::uint8_t B> inline
     void diffuse(T* x, T* x0, const T& diff, const T& dt){
         double a { dt * diff * N * N };
 
         for (std::size_t k = 0; k < ITER; k++){
+#pragma omp parallel for schedule(static) collapse(2)
             for (std::size_t i = 1; i <= N; i++){
                 for (std::size_t j = 1; j <= N; j++){
                     x[I(i, j)] =
@@ -67,11 +74,13 @@ public:
         }
     }
 
-    template<std::uint8_t B>
+
+    template<std::uint8_t B> inline
     void advect(T* d, T* d0, T* u, T* v, const T& dt){
 
         double dt0 { dt * N };
 
+#pragma omp parallel for schedule(static) collapse(2)
         for (std::size_t i = 1; i <= N; i++){
             for (std::size_t j = 1; j <= N; j++){
                 double x {std::clamp((double)i - dt0 * u[I(i, j)], (double)0.5, (double)N + 0.5)};
@@ -106,10 +115,11 @@ public:
         this->advect<0>(x, x0, u, v, dt);
     }
 
+    inline
     void project(T* u, T* v, T* p, T* div){
         double h = 1.0 / N;
 
-
+#pragma omp parallel for schedule(static) collapse(2)
         for (std::size_t i = 1; i <= N; i++){
             for (std::size_t j = 1; j <= N; j++){
 
@@ -123,6 +133,7 @@ public:
         this->setBoundary<0>(p);
 
         for (std::size_t k = 0; k < ITER; k++){
+#pragma omp parallel for schedule(static) collapse(2)
             for (std::size_t i = 1; i <= N; i++){
                 for (std::size_t j = 1; j <= N; j++){
                     p[I(i, j)] = (div[I(i, j)] + p[I(i - 1, j)] + p[I(i + 1, j)] +
@@ -132,6 +143,7 @@ public:
             this->setBoundary<0>(p);
         }
 
+#pragma omp parallel for schedule(static) collapse(2)
         for (std::size_t i = 1; i <= N; i++){
             for (std::size_t j = 1; j <= N; j++){
                 u[I(i, j)] -= 0.5 * (p[I(i + 1, j)] - p[I(i - 1, j)]) / h;
@@ -144,6 +156,7 @@ public:
 
     template<std::uint8_t B>
     void setBoundary(T* x){
+#pragma omp parallel for
         for (std::size_t i = 1; i <= N; i++){
             if constexpr (B == 1){
                 x[I(0, i)] = -x[I(1, i)];
