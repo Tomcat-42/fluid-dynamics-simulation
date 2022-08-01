@@ -6,6 +6,8 @@
 #include "options.hpp"
 #include "physics.hpp"
 
+#include "CImg/CImg.hpp"
+
 class Container {
 private:
   Physics physics;
@@ -37,8 +39,8 @@ public:
   void add_density(float x, float y, float amount);
   void add_velocity(float x, float y, float px, float py);
   void step();
-  void render(sf::RenderWindow &win, Color::ColorType color);
   void fade_density(int size);
 
-  sf::Color hsv(int hue, float sat, float val, float d);
+  void render(cimg_library::CImg<unsigned char> &img,
+              Color::ColorType color_type);
 };

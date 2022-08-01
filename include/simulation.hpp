@@ -3,11 +3,13 @@
 
 #include "container.hpp"
 
+#include "CImg/CImg.hpp"
+
 class Simulation {
 private:
-  sf::RenderWindow win;
   Container container;
   Options options;
+  cimg_library::CImg<unsigned char> img;
   void setup();
 
 public:

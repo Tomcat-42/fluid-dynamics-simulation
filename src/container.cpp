@@ -1,6 +1,9 @@
 #include "container.hpp"
+#include "color.hpp"
 #include "ix.hpp"
 #include <iostream>
+
+#include "CImg/CImg.hpp"
 
 Container::Container() : physics(Physics()) {}
 
@@ -58,45 +61,6 @@ void Container::step() {
                        this->y, this->dt, this->size);
 }
 
-sf::Color Container::hsv(int hue, float sat, float val, float d) {
-  hue %= 360;
-  while (hue < 0)
-    hue += 360;
-
-  if (sat < 0.f)
-    sat = 0.f;
-  if (sat > 1.f)
-    sat = 1.f;
-
-  if (val < 0.f)
-    val = 0.f;
-  if (val > 1.f)
-    val = 1.f;
-
-  int h = hue / 60;
-  float f = float(hue) / 60 - h;
-  float p = val * (1.f - sat);
-  float q = val * (1.f - sat * f);
-  float t = val * (1.f - sat * (1 - f));
-
-  switch (h) {
-  default:
-  case 0:
-  case 6:
-    return sf::Color(val * 255, t * 255, p * 255, d);
-  case 1:
-    return sf::Color(q * 255, val * 255, p * 255, d);
-  case 2:
-    return sf::Color(p * 255, val * 255, t * 255, d);
-  case 3:
-    return sf::Color(p * 255, q * 255, val * 255, d);
-  case 4:
-    return sf::Color(t * 255, p * 255, val * 255, d);
-  case 5:
-    return sf::Color(val * 255, p * 255, q * 255, d);
-  }
-}
-
 float Container::map_to_range(float val, float minIn, float maxIn, float minOut,
                               float maxOut) {
   float x = (val - minIn) / (maxIn - minIn);
@@ -104,38 +68,43 @@ float Container::map_to_range(float val, float minIn, float maxIn, float minOut,
   return (result < minOut) ? minOut : (result > maxOut) ? maxOut : result;
 }
 
-void Container::render(sf::RenderWindow &win, Color::ColorType color) {
-  win.clear();
+void Container::render(cimg_library::CImg<unsigned char> &img,
+                       Color::ColorType color_type) {
+  img.fill(0);
+
   for (int i = 0; i < this->size; i++) {
     for (int j = 0; j < this->size; j++) {
-      sf::RectangleShape rect;
-      rect.setSize(sf::Vector2f(SCALE, SCALE));
-      rect.setPosition(j * SCALE, i * SCALE);
+      Color::RgbaColor color_to_draw;
 
-      switch (color) {
-        case Color::ColorType::Default:
-        rect.setFillColor(sf::Color(255, 255, 255,
-                                    (this->density[IX(i, j, this->size)] > 255)
-                                        ? 255
-                                        : this->density[IX(i, j, this->size)]));
+      switch (color_type) {
+      case Color::ColorType::Default:
+        color_to_draw =
+            Color::RgbaColor(255, 255, 255,
+                             (this->density[IX(i, j, this->size)] > 255)
+                                 ? 255
+                                 : this->density[IX(i, j, this->size)]);
         break;
-        case Color::ColorType::Hsb:
-        rect.setFillColor(
-            this->hsv((this->density[IX(i, j, this->size)]), 1, 1, 255));
+      case Color::ColorType::Hsb:
+        color_to_draw = Color::RgbaColor::from_hsv(
+            this->density[IX(i, j, this->size)], 1, 1, 255);
         break;
-        case Color::ColorType::Velocity: {
+      case Color::ColorType::Velocity: {
         int r = (int)this->map_to_range(this->x[IX(i, j, this->size)], -0.05f,
                                         0.05f, 0, 255);
         int g = (int)this->map_to_range(this->y[IX(i, j, this->size)], -0.05f,
                                         0.05f, 0, 255);
-        rect.setFillColor(sf::Color(r, g, 255));
+        color_to_draw = Color::RgbaColor(r, g, 255);
         break;
       }
       default:
         break;
       };
 
-      win.draw(rect);
+      const unsigned char colors[4] = {color_to_draw.r, color_to_draw.g,
+                                       color_to_draw.b, color_to_draw.a};
+
+      img.draw_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE,
+                          i * SCALE + SCALE, colors);
     }
   }
 }
