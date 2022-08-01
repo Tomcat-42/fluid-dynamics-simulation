@@ -9,7 +9,7 @@ const int Simulation::num_particles = 100;
 
 Simulation::Simulation()
     : container(Container(0.2f, 0, 0.0001f)),
-      options(Options(Color::ColorType::Default)),
+      options(Options(Color::ColorType::Hsb)),
       img(cimg_library::CImg<unsigned char>(SIZE, SIZE, 1, 4, 0)) {}
 
 Simulation::~Simulation() {}
@@ -17,13 +17,16 @@ Simulation::~Simulation() {}
 void Simulation::setup() {}
 
 void Simulation::run() {
-  // this->setup();
+  int center_x = SIZE / 2;
+  int center_y = SIZE / 2;
 
-  const int x0 = 50;
-  const int y0 = 50;
+  int radius = SIZE / 4;
 
-  const int x1 = 300;
-  const int y1 = 300;
+  int x0 = center_x + (radius * cos(-0.1745329));
+  int y0 = center_y + (radius * sin(-0.1745329));
+
+  int x1 = center_x + (radius * cos(0));
+  int y1 = center_y + (radius * sin(0));
 
   for (int i = 0; i < FRAMES; i++) {
 
@@ -52,6 +55,10 @@ void Simulation::run() {
 
     writev(STDOUT_FILENO, iov, 3);
 
-    // this->win.display();
+    x0 = x1;
+    y0 = y1;
+
+    x1 = center_x + (radius * cos(i * (0.1745329)));
+    y1 = center_y + (radius * sin(i * (0.1745329)));
   }
 }

@@ -70,10 +70,11 @@ float Container::map_to_range(float val, float minIn, float maxIn, float minOut,
 
 void Container::render(cimg_library::CImg<unsigned char> &img,
                        Color::ColorType color_type) {
-  img.fill(0);
 
   for (int i = 0; i < this->size; i++) {
     for (int j = 0; j < this->size; j++) {
+      // img.fill(0);
+
       Color::RgbaColor color_to_draw;
 
       switch (color_type) {
@@ -103,8 +104,11 @@ void Container::render(cimg_library::CImg<unsigned char> &img,
       const unsigned char colors[4] = {color_to_draw.r, color_to_draw.g,
                                        color_to_draw.b, color_to_draw.a};
 
+      // std::cout << "colors: " << colors[0] << " " << colors[1] << " "
+      //           << colors[2] << " " << colors[3] << std::endl;
+
       img.draw_rectangle(j * SCALE, i * SCALE, j * SCALE + SCALE,
-                          i * SCALE + SCALE, colors);
+                         i * SCALE + SCALE, colors);
     }
   }
 }
