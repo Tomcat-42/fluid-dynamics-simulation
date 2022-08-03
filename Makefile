@@ -16,7 +16,7 @@ OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
 CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -pipe -std=c++23 -fopenmp
-LDFLAGS  := -L./lib/SFML/ -Wl,-R./lib/SFML '-Wl,-R$$ORIGIN' -lm -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-network -lsfml-system
+LDFLAGS  := -L./lib/SFML/ -Wl,-R./lib/SFML '-Wl,-R$$ORIGIN' -lm -lsfml-graphics -lsfml-window -lsfml-system
 
 all: $(TARGET)
 
