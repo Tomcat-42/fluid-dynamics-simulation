@@ -12,7 +12,7 @@
 #define SIZE 500
 #define ITER 128
 
-#define FRAMES 10
+#define FRAMES 64
 
 int main(const __attribute__((unused)) int argc, const __attribute__((unused)) char** argv){
     // Window window(SIZE, SIZE);
@@ -34,6 +34,9 @@ int main(const __attribute__((unused)) int argc, const __attribute__((unused)) c
         return time::now();
     };
 
+    // NOTE: the array does include the borders
+    std::uint32_t* image = new std::uint32_t[(SIZE + 2) * (SIZE + 2)];
+
     for (std::size_t i = 0; i < FRAMES; i++){
         auto start = get_time();
 
@@ -41,14 +44,14 @@ int main(const __attribute__((unused)) int argc, const __attribute__((unused)) c
 
         std::cout << "\033[2K\r" << std::chrono::duration_cast<scale>(get_time() - start).count() << "(ms)" << std::flush;
 
-        auto image = Image::genImage(SIZE, simulation.getD(), simulation.getU(), simulation.getV());
+        Image::genImage(image, SIZE, simulation.getD(), simulation.getU(), simulation.getV());
 
         std::ofstream of("images/" + std::to_string(i) + ".raw", std::ios::binary);
         of.write(reinterpret_cast<char*>(image), sizeof(std::uint8_t) * 4 * (SIZE + 2) * (SIZE + 2));
         of.close();
-
-        delete image;
     }
+
+    delete [] image;
 
     return 0;
 }

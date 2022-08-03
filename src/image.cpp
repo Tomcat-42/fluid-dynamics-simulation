@@ -1,27 +1,16 @@
 #include "image.hpp"
 
-std::uint8_t* Image::genImage(std::size_t size, const double* d, const double* v, const double* u){
-    // NOTE: the array does include the borders
-    std::uint8_t* image = new std::uint8_t[(size + 2) * (size + 2) * 4];
-
-    // TODO: fix this
-// #pragma omp parallel
-//   {
-// #pragma omp for simd
-        for (std::size_t i = 0, j = 0; i < (size + 2) * (size + 2); i++, j += 4){
-            auto [r, g, b, a] = Image::hsv(Image::getAngle(u[i], v[i]), 1.0, d[i]);
-            image[j]     = r;
-            image[j + 1] = g;
-            image[j + 2] = b;
-            image[j + 3] = a;
-        }
-//    }
-    // TODO: we should not return memory that we allocated
-    return image;
+void Image::genImage(std::uint32_t* image, std::size_t size, const double* d, const double* v, const double* u){
+#pragma omp parallel
+    {
+#pragma omp for simd
+        for (std::size_t i = 0; i < (size + 2) * (size + 2); i++)
+            image[i] = Image::hsv(Image::getAngle(u[i], v[i]), 1.0, d[i]);
+    }
 }
 
 inline __attribute__((always_inline))
-Image::Color Image::hsv(const std::int16_t& hue, double sat, double val){
+std::uint32_t Image::hsv(const std::int16_t& hue, double sat, double val){
     sat = std::clamp(sat, (double)0.0, (double)1.0);
     val = std::clamp(val, (double)0.0, (double)1.0);
 
@@ -31,15 +20,16 @@ Image::Color Image::hsv(const std::int16_t& hue, double sat, double val){
     double q = val * (1.0F - sat * f);
     double t = val * (1.0F - sat * (1.0F - f));
 
+    // NOTE: since we save the color as a uint32_t (RGBA), and the architecture is little endian we need to do it the other way around
     switch (h){
         default:
         case 0:
-        case 6: return {val * 255,   t * 255,    p * 255, 255};
-        case 1: return {  q * 255, val * 255,    p * 255, 255};
-        case 2: return {  p * 255, val * 255,    t * 255, 255};
-        case 3: return {  p * 255,   q * 255,  val * 255, 255};
-        case 4: return {  t * 255,   p * 255,  val * 255, 255};
-        case 5: return {val * 255,   p * 255,    q * 255, 255};
+        case 6: return ((std::uint32_t)(val * 0xFF)) | ((std::uint32_t)(  t * 0xFF) << 8) | ((std::uint32_t)(  p * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
+        case 1: return ((std::uint32_t)(  q * 0xFF)) | ((std::uint32_t)(val * 0xFF) << 8) | ((std::uint32_t)(  p * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
+        case 2: return ((std::uint32_t)(  p * 0xFF)) | ((std::uint32_t)(val * 0xFF) << 8) | ((std::uint32_t)(  t * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
+        case 3: return ((std::uint32_t)(  p * 0xFF)) | ((std::uint32_t)(  q * 0xFF) << 8) | ((std::uint32_t)(val * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
+        case 4: return ((std::uint32_t)(  t * 0xFF)) | ((std::uint32_t)(  p * 0xFF) << 8) | ((std::uint32_t)(val * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
+        case 5: return ((std::uint32_t)(val * 0xFF)) | ((std::uint32_t)(  p * 0xFF) << 8) | ((std::uint32_t)(  q * 0xFF) << 16) | ((std::uint32_t)0xFF << 24);
     }
 }
 

@@ -30,7 +30,7 @@ endif
 release: CXXFLAGS += -O3 -mtune=native -march=native -fomit-frame-pointer
 release: all
 
-debug: al
+debug: all
 	@gdb ./${TARGET}
 
 run: release
