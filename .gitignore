@@ -13,7 +13,7 @@
 *.pch
 
 # Compiled Dynamic libraries
-*.so
+# *.so
 *.dylib
 *.dll
 
@@ -46,3 +46,10 @@ compile_commands.json
 
 # cache files
 .cache
+
+# perf
+*.data
+*.old
+
+# generated images
+images/
