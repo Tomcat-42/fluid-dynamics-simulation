@@ -16,7 +16,7 @@ OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
 CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -pipe -std=c++23 -fopenmp
-LDFLAGS  := -lm $(shell pkg-config sfml-all --libs)
+LDFLAGS  := -lm -L./lib -lsfml-graphics -lsfml-window -lsfml-audio -lsfml-network -lsfml-system
 
 all: $(TARGET)
 
@@ -30,7 +30,7 @@ endif
 release: CXXFLAGS += -O3 -mtune=native -march=native -fomit-frame-pointer
 release: all
 
-debug: all
+debug: al
 	@gdb ./${TARGET}
 
 run: release
