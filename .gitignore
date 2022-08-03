@@ -46,3 +46,10 @@ compile_commands.json
 
 # cache files
 .cache
+
+# peft
+*.data
+*.old
+
+# generated images
+images/
