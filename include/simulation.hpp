@@ -76,7 +76,6 @@ public:
     // NOTE: this is used in the paper to copy form xP to x, adding the source from the screen
     inline __attribute__((unused))
     void addSource(T* x, T* s, const double& dt){
-#pragma omp for simd
         for (std::size_t i = 0; i < FIELD_SIZE; i++) x[i] += dt * s[i];
     }
 
@@ -103,15 +102,11 @@ public:
         double a { dt * diff * N * N };
 
         for (std::size_t k = 0; k < iter; k++){
-#pragma omp parallel
-            {
-#pragma omp for simd collapse(2)
-                for (std::size_t i = 1; i <= N; i++){
-                    for (std::size_t j = 1; j <= N; j++){
-                        x[I(i, j)] =
-                            (x0[I(i, j)] + a * (x[I(i - 1, j)] + x[I(i + 1, j)] +
-                                                x[I(i, j - 1)] + x[I(i, j + 1)])) / (1 + 4 * a);
-                    }
+            for (std::size_t i = 1; i <= N; i++){
+                for (std::size_t j = 1; j <= N; j++){
+                    x[I(i, j)] =
+                        (x0[I(i, j)] + a * (x[I(i - 1, j)] + x[I(i + 1, j)] +
+                                            x[I(i, j - 1)] + x[I(i, j + 1)])) / (1 + 4 * a);
                 }
             }
             this->setBoundary<B>(x);
@@ -123,28 +118,24 @@ public:
 
         double dt0 { dt * N };
 
-#pragma omp parallel
-        {
-#pragma omp for simd collapse(2)
-            for (std::size_t i = 1; i <= N; i++){
-                for (std::size_t j = 1; j <= N; j++){
-                    double x {std::clamp((double)i - dt0 * u[I(i, j)], (double)0.5, (double)N + 0.5)};
-                    double y {std::clamp((double)j - dt0 * v[I(i, j)], (double)0.5, (double)N + 0.5)};
+        for (std::size_t i = 1; i <= N; i++){
+            for (std::size_t j = 1; j <= N; j++){
+                double x {std::clamp((double)i - dt0 * u[I(i, j)], (double)0.5, (double)N + 0.5)};
+                double y {std::clamp((double)j - dt0 * v[I(i, j)], (double)0.5, (double)N + 0.5)};
 
-                    std::size_t i0 {(std::size_t)x};
-                    std::size_t i1 {i0 + 1};
-                    std::size_t j0 {(std::size_t)y};
-                    std::size_t j1 {j0 + 1};
+                std::size_t i0 {(std::size_t)x};
+                std::size_t i1 {i0 + 1};
+                std::size_t j0 {(std::size_t)y};
+                std::size_t j1 {j0 + 1};
 
-                    double s1 {x - i0};
-                    double s0 {1 - s1};
-                    double t1 {y - j0};
-                    double t0 {1 - t1};
+                double s1 {x - i0};
+                double s0 {1 - s1};
+                double t1 {y - j0};
+                double t0 {1 - t1};
 
-                    d[I(i, j)] =
-                        s0 * (t0 * d0[I(i0, j0)] + t1 * d0[I(i0, j1)]) +
-                        s1 * (t0 * d0[I(i1, j0)] + t1 * d0[I(i1, j1)]);
-                }
+                d[I(i, j)] =
+                    s0 * (t0 * d0[I(i0, j0)] + t1 * d0[I(i0, j1)]) +
+                    s1 * (t0 * d0[I(i1, j0)] + t1 * d0[I(i1, j1)]);
             }
         }
         this->setBoundary<B>(d);
@@ -171,14 +162,10 @@ public:
     void project(T* u, T* v, T* p, T* div){
         double h = 1.0 / N;
 
-#pragma omp parallel
-        {
-#pragma omp for simd collapse(2)
-            for (std::size_t i = 1; i <= N; i++){
-                for (std::size_t j = 1; j <= N; j++){
-                    div[I(i, j)] = -0.5 * h * (u[I(i + 1, j)] - u[I(i - 1, j)] + v[I(i, j + 1)] - v[I(i, j - 1)]);
-                    p[I(i, j)] = 0.0f;
-                }
+        for (std::size_t i = 1; i <= N; i++){
+            for (std::size_t j = 1; j <= N; j++){
+                div[I(i, j)] = -0.5 * h * (u[I(i + 1, j)] - u[I(i - 1, j)] + v[I(i, j + 1)] - v[I(i, j - 1)]);
+                p[I(i, j)] = 0.0f;
             }
         }
 
@@ -186,54 +173,43 @@ public:
         this->setBoundary<0>(p);
 
         for (std::size_t k = 0; k < iter; k++){
-#pragma omp parallel
-            {
-#pragma omp for simd collapse(2)
-                for (std::size_t i = 1; i <= N; i++){
-                    for (std::size_t j = 1; j <= N; j++){
-                        p[I(i, j)] = (div[I(i, j)] + p[I(i - 1, j)] + p[I(i + 1, j)] +
-                                                     p[I(i, j - 1)] + p[I(i, j + 1)]) / 4;
-                    }
+            for (std::size_t i = 1; i <= N; i++){
+                for (std::size_t j = 1; j <= N; j++){
+                    p[I(i, j)] = (div[I(i, j)] + p[I(i - 1, j)] + p[I(i + 1, j)] +
+                            p[I(i, j - 1)] + p[I(i, j + 1)]) / 4;
                 }
             }
             this->setBoundary<0>(p);
         }
 
-#pragma omp parallel
-        {
-#pragma omp for simd collapse(2)
-            for (std::size_t i = 1; i <= N; i++){
-                for (std::size_t j = 1; j <= N; j++){
-                    u[I(i, j)] -= 0.5 * (p[I(i + 1, j)] - p[I(i - 1, j)]) / h;
-                    v[I(i, j)] -= 0.5 * (p[I(i, j + 1)] - p[I(i, j - 1)]) / h;
-                }
+        for (std::size_t i = 1; i <= N; i++){
+            for (std::size_t j = 1; j <= N; j++){
+                u[I(i, j)] -= 0.5 * (p[I(i + 1, j)] - p[I(i - 1, j)]) / h;
+                v[I(i, j)] -= 0.5 * (p[I(i, j + 1)] - p[I(i, j - 1)]) / h;
             }
         }
+
         this->setBoundary<1>(u);
         this->setBoundary<2>(v);
     }
 
     template<std::uint8_t B> inline
     void setBoundary(T* x){
-#pragma omp parallel
-        {
-#pragma omp for simd
-            for (std::size_t i = 1; i <= N; i++){
-                if constexpr (B == 1){
-                    x[I(0    , i)] = -x[I(1, i)];
-                    x[I(N + 1, i)] = -x[I(N, i)];
-                } else {
-                    x[I(0    , i)] = x[I(1, i)];
-                    x[I(N + 1, i)] = x[I(N, i)];
-                }
+        for (std::size_t i = 1; i <= N; i++){
+            if constexpr (B == 1){
+                x[I(0    , i)] = -x[I(1, i)];
+                x[I(N + 1, i)] = -x[I(N, i)];
+            } else {
+                x[I(0    , i)] = x[I(1, i)];
+                x[I(N + 1, i)] = x[I(N, i)];
+            }
 
-                if constexpr (B == 2){
-                    x[I(i, 0    )] = -x[I(i, 1)];
-                    x[I(i, N + 1)] = -x[I(i, N)];
-                } else {
-                    x[I(i, 0    )] = x[I(i, 1)];
-                    x[I(i, N + 1)] = x[I(i, N)];
-                }
+            if constexpr (B == 2){
+                x[I(i, 0    )] = -x[I(i, 1)];
+                x[I(i, N + 1)] = -x[I(i, N)];
+            } else {
+                x[I(i, 0    )] = x[I(i, 1)];
+                x[I(i, N + 1)] = x[I(i, N)];
             }
 
             x[I(0    , 0    )] = 0.5f * (x[I(1, 0    )] + x[I(0    , 1)]);
@@ -250,7 +226,6 @@ public:
 #ifndef DEMO
         static_assert((N / 2) - SOURCE_SIZE > 0, "The simulation size is too small");
 
-#pragma omp for simd collapse(2)
         for (std::size_t i = 10; i < 20; i++)
             for (std::size_t j = (N / 2) - SOURCE_SIZE; j <= (N / 2) + SOURCE_SIZE; j++){
                 u0[I(i, j)] = 1.0;
@@ -280,15 +255,9 @@ public:
         this->velocityStep(this->u, this->v, this->uP, this->vP, this->visc, this->dt);
         this->densityStep(this->d, this->dP, this->u, this->v, this->diff, this->dt);
 
-#pragma omp parallel
-        {
-#pragma omp for simd
-            for (std::size_t i = 0; i < FIELD_SIZE; i++) this->dP[i] = 0.0;
-#pragma omp for simd
-            for (std::size_t i = 0; i < FIELD_SIZE; i++) this->uP[i] = 0.0;
-#pragma omp for simd
-            for (std::size_t i = 0; i < FIELD_SIZE; i++) this->vP[i] = 0.0;
-        }
+        for (std::size_t i = 0; i < FIELD_SIZE; i++) this->dP[i] = 0.0;
+        for (std::size_t i = 0; i < FIELD_SIZE; i++) this->uP[i] = 0.0;
+        for (std::size_t i = 0; i < FIELD_SIZE; i++) this->vP[i] = 0.0;
     }
 };
 
