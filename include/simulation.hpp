@@ -76,7 +76,7 @@ public:
     // NOTE: this is used in the paper to copy form xP to x, adding the source from the screen
     inline __attribute__((unused))
     void addSource(T* x, T* s, const double& dt){
-#pragma omp for simd
+//#pragma omp for simd
         for (std::size_t i = 0; i < FIELD_SIZE; i++) x[i] += dt * s[i];
     }
 
@@ -103,9 +103,9 @@ public:
         double a { dt * diff * N * N };
 
         for (std::size_t k = 0; k < iter; k++){
-#pragma omp parallel
+//#pragma omp parallel
             {
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
                 for (std::size_t i = 1; i <= N; i++){
                     for (std::size_t j = 1; j <= N; j++){
                         x[I(i, j)] =
@@ -123,9 +123,9 @@ public:
 
         double dt0 { dt * N };
 
-#pragma omp parallel
+//#pragma omp parallel
         {
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
             for (std::size_t i = 1; i <= N; i++){
                 for (std::size_t j = 1; j <= N; j++){
                     double x {std::clamp((double)i - dt0 * u[I(i, j)], (double)0.5, (double)N + 0.5)};
@@ -171,9 +171,9 @@ public:
     void project(T* u, T* v, T* p, T* div){
         double h = 1.0 / N;
 
-#pragma omp parallel
+//#pragma omp parallel
         {
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
             for (std::size_t i = 1; i <= N; i++){
                 for (std::size_t j = 1; j <= N; j++){
                     div[I(i, j)] = -0.5 * h * (u[I(i + 1, j)] - u[I(i - 1, j)] + v[I(i, j + 1)] - v[I(i, j - 1)]);
@@ -186,9 +186,9 @@ public:
         this->setBoundary<0>(p);
 
         for (std::size_t k = 0; k < iter; k++){
-#pragma omp parallel
+//#pragma omp parallel
             {
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
                 for (std::size_t i = 1; i <= N; i++){
                     for (std::size_t j = 1; j <= N; j++){
                         p[I(i, j)] = (div[I(i, j)] + p[I(i - 1, j)] + p[I(i + 1, j)] +
@@ -199,9 +199,9 @@ public:
             this->setBoundary<0>(p);
         }
 
-#pragma omp parallel
+//#pragma omp parallel
         {
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
             for (std::size_t i = 1; i <= N; i++){
                 for (std::size_t j = 1; j <= N; j++){
                     u[I(i, j)] -= 0.5 * (p[I(i + 1, j)] - p[I(i - 1, j)]) / h;
@@ -215,9 +215,9 @@ public:
 
     template<std::uint8_t B> inline
     void setBoundary(T* x){
-#pragma omp parallel
+//#pragma omp parallel
         {
-#pragma omp for simd
+//#pragma omp for simd
             for (std::size_t i = 1; i <= N; i++){
                 if constexpr (B == 1){
                     x[I(0    , i)] = -x[I(1, i)];
@@ -250,7 +250,7 @@ public:
 #ifndef DEMO
         static_assert((N / 2) - SOURCE_SIZE > 0, "The simulation size is too small");
 
-#pragma omp for simd collapse(2)
+//#pragma omp for simd collapse(2)
         for (std::size_t i = 10; i < 20; i++)
             for (std::size_t j = (N / 2) - SOURCE_SIZE; j <= (N / 2) + SOURCE_SIZE; j++){
                 u0[I(i, j)] = 1.0;
@@ -280,13 +280,13 @@ public:
         this->velocityStep(this->u, this->v, this->uP, this->vP, this->visc, this->dt);
         this->densityStep(this->d, this->dP, this->u, this->v, this->diff, this->dt);
 
-#pragma omp parallel
+//#pragma omp parallel
         {
-#pragma omp for simd
+//#pragma omp for simd
             for (std::size_t i = 0; i < FIELD_SIZE; i++) this->dP[i] = 0.0;
-#pragma omp for simd
+//#pragma omp for simd
             for (std::size_t i = 0; i < FIELD_SIZE; i++) this->uP[i] = 0.0;
-#pragma omp for simd
+//#pragma omp for simd
             for (std::size_t i = 0; i < FIELD_SIZE; i++) this->vP[i] = 0.0;
         }
     }

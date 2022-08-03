@@ -15,7 +15,7 @@ HDRS := $(shell find $(COMMONDIR)include -type f -name *.hpp)
 OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
-CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -std=c++23 -pipe -fopenmp
+CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -std=c++23 -pipe -fopenacc
 LDFLAGS  := -lm
 
 all: $(TARGET)

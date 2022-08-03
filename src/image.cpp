@@ -2,12 +2,10 @@
 #include <algorithm>
 
 void Image::genImage(std::uint32_t* image, std::size_t size, const double* d, const double* v, const double* u){
-#pragma omp parallel
-    {
-#pragma omp for simd
-        for (std::size_t i = 0; i < (size + 2) * (size + 2); i++)
+    std::size_t n = (size + 2) * (size + 2);
+#pragma acc kernel copyin(u[0:n], v[0:n], d[0:n]) copyout(image[0:n])
+        for (std::size_t i = 0; i < n; i++)
             image[i] = Image::hsv(Image::getAngle(u[i], v[i]), 1.0, d[i]);
-    }
 }
 
 inline __attribute__((always_inline))
