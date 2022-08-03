@@ -8,7 +8,6 @@
 
 #include "image.hpp"
 #include "simulation.hpp"
-#include "window.hpp"
 
 #define SIZE 500
 #define ITER 128
