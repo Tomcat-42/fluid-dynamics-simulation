@@ -8,4 +8,4 @@ module load gcc/11.1
 make
 
 # Copy the executable to the user dir
-cp -av $TARGET $
+cp -av "$TARGET" "$SCRATCH"
