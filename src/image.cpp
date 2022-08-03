@@ -1,4 +1,5 @@
 #include "image.hpp"
+#include <algorithm>
 
 void Image::genImage(std::uint32_t* image, std::size_t size, const double* d, const double* v, const double* u){
 #pragma omp parallel
