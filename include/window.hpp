@@ -1,9 +1,12 @@
 #pragma once
 
-#include <cstdint>
 #include <SFML/Graphics.hpp>
+#include <cmath>
+#include <cstdint>
 
-// Wrapper class
+#include "simulation.hpp"
+
+// Wrapper class for the SFML RenderWindow
 class Window {
     sf::RenderWindow *window;
     sf::Image buffer;
@@ -13,7 +16,11 @@ class Window {
     std::size_t windowX;
     std::size_t windowY;
 
-    public:
+public:
+
+    std::int16_t getAngle(const double& u, const double& v);
+
+    sf::Color hsv(const std::int16_t& hue, double sat, double val);
 
     Window(const std::size_t& windowX, const std::size_t& windowY);
 
@@ -31,4 +38,3 @@ class Window {
 
     ~Window();
 };
-

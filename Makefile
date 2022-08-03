@@ -4,6 +4,7 @@ COMMONDIR := ./
 TARGET := $(COMMONDIR)fluid
 
 GEN_TAGS := $(shell command -v ctags 2> /dev/null)
+PERF := $(shell command -v perf 2> /dev/null)
 
 ifdef GEN_TAGS
 TAGS = $(COMMONDIR)tags
@@ -15,7 +16,7 @@ OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
 CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -pipe -std=c++23 -fopenmp
-LDFLAGS  := -lm $(shell pkg-config sfml-all --libs) 
+LDFLAGS  := -lm $(shell pkg-config sfml-all --libs)
 
 all: $(TARGET)
 
@@ -32,10 +33,13 @@ release: all
 debug: all
 	@gdb ./${TARGET}
 
-run: all
+run: release
 	@./${TARGET}
 
 .PHONY: clean run debug
+ifdef PERF
+.PHONY: profile stat
+endif
 
 depend: .depend
 
@@ -51,3 +55,11 @@ ifdef GEN_TAGS
 	$(RM) ${TAGS}
 endif
 
+ifdef PERF
+profile: release
+	perf record ./${TARGET}
+	perf report
+
+stat: release
+	perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations ./${TARGET}
+endif
