@@ -93,7 +93,7 @@ public:
     }
 
     template<std::uint8_t B> inline
-    const std::tuple<T&, T&, T&> operator[](const std::size_t& i, const std::size_t& j) const {
+    const std::tuple<T&, T&, T&> operator()(const std::size_t& i, const std::size_t& j) const {
         if constexpr (B == 1) return {this->dP[I(i + 1, j + 1)], this->uP[I(i + 1, j + 1)], this->vP[I(i + 1, j + 1)]};
         else return {this->d[I(i + 1, j + 1)], this->u[I(i + 1, j + 1)], this->v[I(i + 1, j + 1)]};
     }
