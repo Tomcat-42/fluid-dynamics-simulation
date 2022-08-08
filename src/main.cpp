@@ -9,15 +9,17 @@
 #include "image.hpp"
 #include "simulation.hpp"
 
-#define SIZE 500
+#define SIZE 1000
 #define ITER 128
 
-#define FRAMES 64
+#define FRAMES 16
 
 int main(const __attribute__((unused)) int argc, const __attribute__((unused)) char** argv){
     // Window window(SIZE, SIZE);
 
     Simulation<double, SIZE, ITER> simulation(0.1, 0.000000000000001, 0.000000000000001);
+
+    simulation.test();
 
     std::cout << ":: simulation params:" << std::endl
         << " size = " << SIZE << "x" << SIZE << std::endl

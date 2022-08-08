@@ -44,7 +44,9 @@ class Simulation {
 
 public:
     constexpr Simulation(const double dt, const double diff, const double visc): dt(dt), diff(diff), visc(visc){
-        // NOTE: according to spec, new will return memory that is aligned to 16
+        // NOTE: according to spec, new will return memory that is aligned to 16, double is aligned to 8
+        // the problem is that index 1, is not aligned to 16 and since most of the computation happens relative
+        // to index 1 this might cause problems with SSE/AVX
         this->u = new T[FIELD_SIZE];
         this->v = new T[FIELD_SIZE];
         this->d = new T[FIELD_SIZE];
@@ -52,6 +54,10 @@ public:
         this->uP = new T[FIELD_SIZE];
         this->vP = new T[FIELD_SIZE];
         this->dP = new T[FIELD_SIZE];
+    }
+
+    void test(){
+        std::cout << &u[0] << std::endl;
     }
 
     const T* getU() const {
@@ -153,6 +159,7 @@ public:
     void densityStep(T* x, T* x0, T* u, T* v, const T& diff, const T& dt){
          // this->addSource(x, x0, dt);
 #ifndef DEMO
+#pragma omp for simd collapse(2)
          for (std::size_t i = 10; i < 50; i++)
             for (std::size_t j = (N / 2) - SOURCE_SIZE; j <= (N / 2) + SOURCE_SIZE; j++){
                 x0[I(i, j)] = .5;
@@ -215,25 +222,22 @@ public:
 
     template<std::uint8_t B> inline
     void setBoundary(T* x){
-#pragma omp parallel
-        {
 #pragma omp for simd
-            for (std::size_t i = 1; i <= N; i++){
-                if constexpr (B == 1){
-                    x[I(0    , i)] = -x[I(1, i)];
-                    x[I(N + 1, i)] = -x[I(N, i)];
-                } else {
-                    x[I(0    , i)] = x[I(1, i)];
-                    x[I(N + 1, i)] = x[I(N, i)];
-                }
+        for (std::size_t i = 1; i <= N; i++){
+            if constexpr (B == 1){
+                x[I(0    , i)] = -x[I(1, i)];
+                x[I(N + 1, i)] = -x[I(N, i)];
+            } else {
+                x[I(0    , i)] = x[I(1, i)];
+                x[I(N + 1, i)] = x[I(N, i)];
+            }
 
-                if constexpr (B == 2){
-                    x[I(i, 0    )] = -x[I(i, 1)];
-                    x[I(i, N + 1)] = -x[I(i, N)];
-                } else {
-                    x[I(i, 0    )] = x[I(i, 1)];
-                    x[I(i, N + 1)] = x[I(i, N)];
-                }
+            if constexpr (B == 2){
+                x[I(i, 0    )] = -x[I(i, 1)];
+                x[I(i, N + 1)] = -x[I(i, N)];
+            } else {
+                x[I(i, 0    )] = x[I(i, 1)];
+                x[I(i, N + 1)] = x[I(i, N)];
             }
 
             x[I(0    , 0    )] = 0.5f * (x[I(1, 0    )] + x[I(0    , 1)]);
@@ -280,6 +284,7 @@ public:
         this->velocityStep(this->u, this->v, this->uP, this->vP, this->visc, this->dt);
         this->densityStep(this->d, this->dP, this->u, this->v, this->diff, this->dt);
 
+// NOTE: this might be faster, don't know, but the idea is to keep things in cache
 #pragma omp parallel
         {
 #pragma omp for simd

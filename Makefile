@@ -15,8 +15,9 @@ HDRS := $(shell find $(COMMONDIR)include -type f -name *.hpp)
 OBJS := $(SRCS:.cpp=.o)
 
 INCLUDES := -I./include
-CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -std=c++23 -pipe -fopenmp
+CXXFLAGS := -Wall -Werror -Wextra -Wpedantic -g ${INCLUDES} -std=gnu++2b -pipe -fopenmp
 LDFLAGS  := -lm
+CXX := g++
 
 all: $(TARGET)
 
@@ -57,7 +58,8 @@ endif
 
 ifdef PERF
 profile: release
-	perf record ./${TARGET}
+	# perf record ./${TARGET}
+	perf record -e L1-dcache-load-misses -c 10000 ./${TARGET}
 	perf report
 
 stat: release
