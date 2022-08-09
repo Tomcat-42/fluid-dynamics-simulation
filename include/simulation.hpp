@@ -47,6 +47,7 @@ public:
         // NOTE: according to spec, new will return memory that is aligned to 16, double is aligned to 8
         // the problem is that index 1, is not aligned to 16 and since most of the computation happens relative
         // to index 1 this might cause problems with SSE/AVX
+        // TODO: test this
         this->u = new T[FIELD_SIZE];
         this->v = new T[FIELD_SIZE];
         this->d = new T[FIELD_SIZE];

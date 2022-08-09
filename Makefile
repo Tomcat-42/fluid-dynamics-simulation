@@ -54,13 +54,14 @@ clean:
 	$(RM) ${OBJS} ${TARGET}
 ifdef GEN_TAGS
 	$(RM) ${TAGS}
+	$(RM) perf*
 endif
 
 ifdef PERF
 profile: release
-	# perf record ./${TARGET}
-	perf record -e L1-dcache-load-misses -c 10000 ./${TARGET}
-	perf report
+	perf record ./${TARGET}
+	# perf record -e LLC-misses -c 10000 ./${TARGET}
+	perf report -Mintel
 
 stat: release
 	perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations ./${TARGET}
