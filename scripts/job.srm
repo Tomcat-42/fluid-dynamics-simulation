@@ -14,6 +14,10 @@ nodeset -e "$SLURM_JOB_NODELIST"
 
 cd "$SCRATCH/fluid-dynamics-simulation/"
 
+mkdir -p "$SCRATCH/fluid-dynamics-simulation/images/"
+
+rm -f "$SCRATCH/fluid-dynamics-simulation/images/*"
+
 # Configura os compiladores
 module load gcc/11.1
 # Compila o programa no diretório $SCRATCH
